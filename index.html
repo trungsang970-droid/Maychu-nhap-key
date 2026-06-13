@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ULTRA KEY SYSTEM</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:radial-gradient(circle,#001b3d,#000);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.box{
+width:360px;
+padding:20px;
+background:rgba(0,0,0,0.7);
+border:2px solid #00c3ff;
+border-radius:20px;
+text-align:center;
+box-shadow:0 0 25px #00c3ff;
+}
+
+input,button{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:none;
+border-radius:10px;
+}
+
+button{
+background:linear-gradient(90deg,#ff0033,#00c3ff);
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.dashboard{
+display:none;
+padding:20px;
+}
+
+.card{
+margin:10px 0;
+padding:12px;
+border:1px solid #00c3ff;
+border-radius:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="box" id="login">
+
+<h2>🔐 NHẬP KEY ULTRA</h2>
+
+<input id="key" placeholder="AG-XXX-XXX">
+
+<button onclick="checkKey()">VÀO</button>
+
+<p id="msg"></p>
+
+</div>
+
+<div class="box dashboard" id="dash">
+
+<h2>🎮 ULTRA DASHBOARD</h2>
+
+<div class="card">🎯 Nhẹ tâm</div>
+<div class="card">⚜️ Độ nhạy</div>
+<div class="card">📱 Thiết bị</div>
+<div class="card">🚀 Aim assistant</div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+
+<script>
+
+const firebaseConfig = {
+databaseURL: "YOUR_DATABASE_URL"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function getDeviceID(){
+return navigator.userAgent;
+}
+
+function checkKey(){
+
+let key = document.getElementById("key").value.toUpperCase();
+
+db.ref("keys/"+key).get().then(snap=>{
+
+if(!snap.exists()){
+msg("❌ KEY sai");
+return;
+}
+
+let data = snap.val();
+
+let now = Date.now();
+
+if(data.status!="active"){
+msg("❌ KEY bị khóa");
+return;
+}
+
+if(data.expire!="never" && now>data.expire){
+msg("⏳ KEY hết hạn");
+return;
+}
+
+// DEVICE LOCK
+if(data.device && data.device != getDeviceID()){
+msg("❌ KEY đã bị khóa thiết bị khác");
+return;
+}
+
+// bind device
+if(!data.device){
+db.ref("keys/"+key).update({
+device:getDeviceID()
+});
+}
+
+msg("🟢 KEY hợp lệ");
+
+document.getElementById("login").style.display="none";
+document.getElementById("dash").style.display="block";
+
+});
+
+}
+
+function msg(t){
+document.getElementById("msg").innerText=t;
+}
+
+</script>
+
+</body>
+</html>
